@@ -62,6 +62,7 @@ async def get_balance(
 @limiter.limit("20/minute")
 async def summarize(
     request: Request,
+    request_data: SummarizeRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -70,10 +71,7 @@ async def summarize(
     Returns a fake summary of the input text.
     Rate limit: 20 requests per minute.
     """
-    # Get request body
-    body = await request.json()
-    text = body.get("text", "")
-    
+    text = request_data.text
     COST = 10
     
     # Try to deduct credits
@@ -101,6 +99,7 @@ async def summarize(
 @limiter.limit("20/minute")
 async def analyze(
     request: Request,
+    request_data: AnalyzeRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -109,10 +108,7 @@ async def analyze(
     Returns word count and sentiment (fake).
     Rate limit: 20 requests per minute.
     """
-    # Get request body
-    body = await request.json()
-    text = body.get("text", "")
-    
+    text = request_data.text
     COST = 25
     
     # Try to deduct credits
