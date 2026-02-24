@@ -4,6 +4,7 @@ import stripe
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
@@ -85,6 +86,15 @@ instrumentator.instrument(app).expose(app)
 # Add SessionMiddleware for OAuth (required by authlib)
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
+# Add CORS middleware (allow specific origins)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include auth routes
 app.include_router(auth.router)
 
@@ -125,6 +135,20 @@ async def log_requests(request: Request, call_next):
         duration_ms=round(duration, 2)
     )
 
+    return response
+
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "deny"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
     return response
 
 
