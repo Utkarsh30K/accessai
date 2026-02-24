@@ -7,44 +7,44 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Start database
-      run: |
-        docker run -d --name postgres \
-          -e POSTGRES_USER=user \
-          -e POSTGRES_PASSWORD=password \
-          -e POSTGRES_DB=accessai \
-          -p 5432:5432 \
-          postgres:15
-    
-    - name: Wait for database
-      run: sleep 5
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    
-    - name: Run application
-      run: |
-        export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/accessai"
-        export SECRET_KEY="test-secret-key-for-ci"
-        export GOOGLE_CLIENT_ID="test-client-id"
-        export GOOGLE_CLIENT_SECRET="test-client-secret"
-        export GOOGLE_REDIRECT_URI="http://localhost:8000/auth/callback"
-        uvicorn accessai.main:app --host 0.0.0.0 --port 8000 &
-        sleep 10
-    
-    - name: Run health check
-      run: |
-        curl -f http://localhost:8000/health || exit 1
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Start database
+        run: |
+          docker run -d --name postgres \
+            -e POSTGRES_USER=user \
+            -e POSTGRES_PASSWORD=password \
+            -e POSTGRES_DB=accessai \
+            -p 5432:5432 \
+            postgres:15
+
+      - name: Wait for database
+        run: sleep 5
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run application
+        run: |
+          export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/accessai"
+          export SECRET_KEY="test-secret-key-for-ci"
+          export GOOGLE_CLIENT_ID="test-client-id"
+          export GOOGLE_CLIENT_SECRET="test-client-secret"
+          export GOOGLE_REDIRECT_URI="http://localhost:8000/auth/callback"
+          uvicorn accessai.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+
+      - name: Run health check
+        run: |
+          curl -f http://localhost:8000/health || exit 1
