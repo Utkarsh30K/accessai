@@ -37,7 +37,11 @@ jobs:
     
     - name: Run application
       run: |
-        DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/accessai" \
+        export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/accessai"
+        export SECRET_KEY="test-secret-key-for-ci"
+        export GOOGLE_CLIENT_ID="test-client-id"
+        export GOOGLE_CLIENT_SECRET="test-client-secret"
+        export GOOGLE_REDIRECT_URI="http://localhost:8000/auth/callback"
         uvicorn accessai.main:app --host 0.0.0.0 --port 8000 &
         sleep 10
     
