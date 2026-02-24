@@ -145,3 +145,5 @@ async def health_check(db_session: AsyncSession = Depends(get_db)):
         return JSONResponse(status_code=503, content=status)
     
     return status
+
+#Commit added to test ci
