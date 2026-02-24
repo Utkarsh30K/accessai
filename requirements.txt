@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+pydantic-settings
+asyncpg
+authlib
+python-jose[cryptography]
+httpx
+itsdangerous
+stripe
+structlog
+sentry-sdk
+prometheus-fastapi-instrumentator
