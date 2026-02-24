@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 from .database import engine, Base, get_db
 from .models import user  # Ensure the User model is imported
 from .models import credit  # Ensure the Credit models are imported
