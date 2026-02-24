@@ -12,3 +12,4 @@ stripe
 structlog
 sentry-sdk
 prometheus-fastapi-instrumentator
+slowapi

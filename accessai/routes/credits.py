@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..database import get_db
 from ..models.user import User
 from ..dependencies.auth import get_current_user
@@ -11,16 +13,19 @@ from ..services.credit import (
     InsufficientCreditsError
 )
 
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/credits", tags=["Credits"])
 
 
-# Request models
+# Request models with validation
 class SummarizeRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=10, max_length=2000, description="Text to summarize (10-2000 characters)")
 
 
 class AnalyzeRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=10, max_length=2000, description="Text to analyze (10-2000 characters)")
 
 
 @router.get("/balance")
@@ -54,15 +59,21 @@ async def get_balance(
 
 
 @router.post("/summarize", tags=["AI Features"])
+@limiter.limit("20/minute")
 async def summarize(
-    request: SummarizeRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Summarize text - costs 10 credits.
     Returns a fake summary of the input text.
+    Rate limit: 20 requests per minute.
     """
+    # Get request body
+    body = await request.json()
+    text = body.get("text", "")
+    
     COST = 10
     
     # Try to deduct credits
@@ -82,20 +93,26 @@ async def summarize(
         )
     
     # Return fake summary (first 50 characters)
-    summary = f"Summary: {request.text[:50]}..."
+    summary = f"Summary: {text[:50]}..."
     return {"result": summary}
 
 
 @router.post("/analyze", tags=["AI Features"])
+@limiter.limit("20/minute")
 async def analyze(
-    request: AnalyzeRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Analyze text - costs 25 credits.
     Returns word count and sentiment (fake).
+    Rate limit: 20 requests per minute.
     """
+    # Get request body
+    body = await request.json()
+    text = body.get("text", "")
+    
     COST = 25
     
     # Try to deduct credits
@@ -115,7 +132,7 @@ async def analyze(
         )
     
     # Return fake analysis
-    word_count = len(request.text.split())
+    word_count = len(text.split())
     return {
         "result": "Analysis complete.",
         "word_count": word_count,

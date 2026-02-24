@@ -6,6 +6,9 @@ from fastapi import FastAPI, Request, Depends
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from .database import engine, Base, get_db
 from .models import user  # Ensure the User model is imported
 from .models import credit  # Ensure the Credit models are imported
@@ -64,7 +67,16 @@ async def lifespan(app: FastAPI):
     logger.info("AccessAI server shutting down...")
 
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title="AccessAI", lifespan=lifespan)
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+
+# Add rate limit exception handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add Prometheus metrics
 instrumentator.instrument(app).expose(app)
