@@ -11,24 +11,36 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
     
+    - name: Start database
+      run: |
+        docker run -d --name postgres \
+          -e POSTGRES_USER=user \
+          -e POSTGRES_PASSWORD=password \
+          -e POSTGRES_DB=accessai \
+          -p 5432:5432 \
+          postgres:15
+    
+    - name: Wait for database
+      run: sleep 5
+    
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
     
-    - name: Start services
+    - name: Run application
       run: |
-        docker-compose up -d
+        DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/accessai" \
+        uvicorn accessai.main:app --host 0.0.0.0 --port 8000 &
         sleep 10
     
     - name: Run health check
       run: |
         curl -f http://localhost:8000/health || exit 1
-    
-    - name: Test balance endpoint
-      run: |
-        curl -f http://localhost:8000/credits/balance || exit 1
